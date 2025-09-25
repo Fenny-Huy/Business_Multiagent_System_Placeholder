@@ -1,0 +1,101 @@
+# tools/review_search_tool.py
+import chromadb
+import json
+from typing import List, Dict, Any, Optional
+
+
+class ReviewSearchTool:
+    """ChromaDB-based review search tool for multi-agent system"""
+    
+    def __init__(self, host: str = "localhost", port: int = 8001):
+        """Initialize ChromaDB connection
+        
+        Args:
+            host: ChromaDB server host
+            port: ChromaDB server port
+        """
+        self.client = chromadb.HttpClient(host=host, port=port)
+        try:
+            self.collection = self.client.get_collection("yelp_reviews")
+            print(f"✓ Connected to ChromaDB collection: yelp_reviews")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not connect to ChromaDB: {e}")
+            self.collection = None
+    
+    def search_reviews(self, query: str, k: int = 5, business_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Search for relevant reviews
+        
+        Args:
+            query: Search query
+            k: Number of results to return
+            business_id: Optional business ID filter
+            
+        Returns:
+            List of review documents with metadata
+        """
+        if not self.collection:
+            return [{"error": "ChromaDB collection not available"}]
+        
+        try:
+            # Set up filter for business_id if provided
+            where_filter = {"business_id": business_id} if business_id else None
+            
+            # Query the collection
+            results = self.collection.query(
+                query_texts=[query],
+                n_results=k,
+                where=where_filter
+            )
+            
+            # Process results
+            processed_results = []
+            if results and 'ids' in results and len(results['ids']) > 0:
+                for i in range(len(results['ids'][0])):
+                    metadata = results['metadatas'][0][i] if 'metadatas' in results else {}
+                    text = results['documents'][0][i] if 'documents' in results else ""
+                    distance = results['distances'][0][i] if 'distances' in results else 0
+                    
+                    # Convert distance to similarity score
+                    similarity_score = 1.0 - distance
+                    
+                    processed_results.append({
+                        "review_id": metadata.get("review_id", ""),
+                        "text": text,
+                        "stars": metadata.get("stars", ""),
+                        "business_id": metadata.get("business_id", ""),
+                        "date": metadata.get("date", ""),
+                        "score": float(similarity_score)
+                    })
+            
+            return processed_results
+            
+        except Exception as e:
+            return [{"error": f"Search failed: {str(e)}"}]
+    
+    def __call__(self, input_data):
+        """Make the tool callable with flexible input formats"""
+        # Handle JSON string input
+        if isinstance(input_data, str):
+            if input_data.strip().startswith('{'):
+                try:
+                    parsed = json.loads(input_data)
+                    return self.search_reviews(
+                        query=parsed.get("query", ""),
+                        k=parsed.get("k", 5),
+                        business_id=parsed.get("business_id")
+                    )
+                except json.JSONDecodeError:
+                    # Treat as plain string query
+                    return self.search_reviews(query=input_data, k=5)
+            else:
+                return self.search_reviews(query=input_data, k=5)
+        
+        # Handle dictionary input
+        elif isinstance(input_data, dict):
+            return self.search_reviews(
+                query=input_data.get("query", ""),
+                k=input_data.get("k", 5),
+                business_id=input_data.get("business_id")
+            )
+        
+        return [{"error": f"Invalid input format: {type(input_data)}"}]
