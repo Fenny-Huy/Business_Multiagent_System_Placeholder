@@ -2,18 +2,24 @@
 import chromadb
 import json
 from typing import List, Dict, Any, Optional
+import os
 
+import dotenv
+dotenv.load_dotenv()
 
 class ReviewSearchTool:
     """ChromaDB-based review search tool for multi-agent system"""
     
-    def __init__(self, host: str = "localhost", port: int = 8001):
+    def __init__(self, host: str = None, port: int = 8001):
         """Initialize ChromaDB connection
         
         Args:
-            host: ChromaDB server host
+            host: ChromaDB server host (defaults to CHROMA_HOST env var or "localhost")
             port: ChromaDB server port
         """
+        if host is None:
+            host = os.getenv("CHROMA_HOST", "localhost")
+        
         self.client = chromadb.HttpClient(host=host, port=port)
         try:
             self.collection = self.client.get_collection("yelp_reviews")

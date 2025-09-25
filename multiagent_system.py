@@ -1,7 +1,6 @@
    # multiagent_system.py
 from typing import Dict, Any, List
 from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolExecutor
 from typing_extensions import TypedDict
 
 # Import agents
@@ -29,11 +28,11 @@ class AgentState(TypedDict):
 class MultiAgentSystem:
     """LangGraph-based multi-agent system with supervisor coordination"""
     
-    def __init__(self, chroma_host: str = "localhost", log_level: str = "INFO"):
+    def __init__(self, chroma_host: str = None, log_level: str = "INFO"):
         """Initialize the multi-agent system
         
         Args:
-            chroma_host: ChromaDB server host
+            chroma_host: ChromaDB server host (defaults to CHROMA_HOST env var or "localhost")
             log_level: Logging level
         """
         # Setup logging
@@ -218,7 +217,8 @@ class MultiAgentSystem:
 def main():
     """Example usage of the multi-agent system"""
     # Initialize system
-    system = MultiAgentSystem(chroma_host="localhost")
+    # Initialize system - will use CHROMA_HOST from .env file
+    system = MultiAgentSystem()
     
     # Example queries
     test_queries = [

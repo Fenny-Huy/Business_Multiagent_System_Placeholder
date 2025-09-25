@@ -1,21 +1,30 @@
 # agents/search_agent.py
 from typing import Dict, Any, List
 from langchain.tools import Tool
+import os
 from agents.base_agent import BaseAgent
 from tools.review_search_tool import ReviewSearchTool
 from tools.business_search_tool import BusinessSearchTool
+
+import dotenv
+dotenv.load_dotenv()
 
 
 class SearchAgent(BaseAgent):
     """Agent specialized in searching and retrieving information from databases"""
     
-    def __init__(self, chroma_host: str = "localhost"):
+    def __init__(self, chroma_host: str = None):
         """Initialize search agent
         
         Args:
-            chroma_host: ChromaDB server host
+            chroma_host: ChromaDB server host (defaults to CHROMA_HOST env var or "localhost")
         """
-        # Initialize tools
+        # Use environment variable if no host is provided
+        if chroma_host is None:
+            chroma_host = os.getenv("CHROMA_HOST", "localhost")
+            print(f"✓ Using ChromaDB host from env: {chroma_host}")
+        
+        # Initialize tools with the host from env or parameter
         self.review_search_tool = ReviewSearchTool(host=chroma_host, port=8001)
         self.business_search_tool = BusinessSearchTool(host=chroma_host, port=8000)
         

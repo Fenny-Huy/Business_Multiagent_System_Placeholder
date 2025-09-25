@@ -8,6 +8,9 @@ import os
 from multiagent_system import MultiAgentSystem
 from config.api_keys import APIKeyManager
 
+import dotenv
+dotenv.load_dotenv()
+
 
 def setup_environment():
     """Setup environment and check prerequisites"""
@@ -36,7 +39,7 @@ def run_examples():
     
     try:
         # Initialize the system
-        system = MultiAgentSystem(chroma_host="localhost", log_level="INFO")
+        system = MultiAgentSystem(log_level="INFO")
         print("✅ System initialized successfully!")
         
     except Exception as e:
