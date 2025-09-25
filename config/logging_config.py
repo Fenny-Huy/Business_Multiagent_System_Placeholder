@@ -23,6 +23,10 @@ def setup_logging(
     # Create logs directory
     Path(log_dir).mkdir(exist_ok=True)
     
+    # Clear existing handlers to prevent duplicate logging
+    root_logger = logging.getLogger()
+    root_logger.handlers.clear()
+    
     # Configure structlog
     structlog.configure(
         processors=[
@@ -66,7 +70,8 @@ def setup_logging(
     logging.basicConfig(
         level=getattr(logging, log_level),
         handlers=handlers,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        force=True  # Force reconfiguration even if basicConfig was called before
     )
 
 
