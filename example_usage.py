@@ -139,7 +139,7 @@ def interactive_mode():
     print("🚀 Starting Interactive Multi-Agent System...")
     
     try:
-        system = MultiAgentSystem(chroma_host="localhost", log_level="INFO")
+        system = MultiAgentSystem(log_level="INFO")
         print("✅ System ready! Type your queries below (type 'quit' to exit):")
         
         while True:

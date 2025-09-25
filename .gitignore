@@ -166,3 +166,8 @@ results/figures/*.pdf
 config/.enc_key
 logs/errors.log
 logs/hybrid_llm.log
+
+
+logs/*.log
+
+state_logs/*.json
