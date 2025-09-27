@@ -58,54 +58,61 @@ class MultiAgentSystem:
         self.logger.info("✓ Multi-agent system initialized")
     
     def _display_state_change(self, node_name: str, state: AgentState, changes: Dict[str, Any] = None):
-        """Display state changes in real-time"""
+        """Log state changes to a dedicated file instead of displaying in terminal"""
         if not self.show_state_changes:
             return
             
-        print(f"\n{'='*60}")
-        print(f"🔄 STATE UPDATE - {node_name}")
-        print('='*60)
+        # Create a dedicated state logger
+        state_logger = get_logger("agent_states")
         
-        # Show key state information
-        print(f"Last Agent: {state.get('last_agent', 'None')}")
-        print(f"Next Agent: {state.get('next_agent', 'None')}")
-        print(f"Completed: {state.get('completed', False)}")
+        # Format the state change information
+        log_parts = []
+        log_parts.append(f"{'='*60}")
+        log_parts.append(f"STATE UPDATE - {node_name}")
+        log_parts.append(f"{'='*60}")
         
-        # Show search results summary
+        # Add key state information
+        log_parts.append(f"Last Agent: {state.get('last_agent', 'None')}")
+        log_parts.append(f"Next Agent: {state.get('next_agent', 'None')}")
+        log_parts.append(f"Completed: {state.get('completed', False)}")
+        
+        # Add search results summary
         search_results = state.get('search_results', {})
         if search_results:
-            print(f"\n📊 Search Results:")
+            log_parts.append("\nSearch Results:")
             for key, value in search_results.items():
                 if isinstance(value, list):
-                    print(f"  - {key}: {len(value)} items")
+                    log_parts.append(f"  - {key}: {len(value)} items")
                 else:
-                    print(f"  - {key}: {type(value).__name__}")
+                    log_parts.append(f"  - {key}: {type(value).__name__}")
         
-        # Show analysis results summary  
+        # Add analysis results summary  
         analysis_results = state.get('analysis_results', {})
         if analysis_results:
-            print(f"\n🔍 Analysis Results:")
+            log_parts.append("\nAnalysis Results:")
             for key, value in analysis_results.items():
                 if isinstance(value, dict):
-                    print(f"  - {key}: {list(value.keys())}")
+                    log_parts.append(f"  - {key}: {list(value.keys())}")
                 else:
-                    print(f"  - {key}: {type(value).__name__}")
+                    log_parts.append(f"  - {key}: {type(value).__name__}")
         
-        # Show final response preview
+        # Add final response preview
         final_response = state.get('final_response', '')
         if final_response:
             preview = final_response[:100] + "..." if len(final_response) > 100 else final_response
-            print(f"\n💬 Response Preview: {preview}")
+            log_parts.append(f"\nResponse Preview: {preview}")
         
-        # Show recent messages
+        # Add recent messages
         messages = state.get('messages', [])
         if messages:
-            print(f"\n📝 Recent Messages:")
+            log_parts.append("\nRecent Messages:")
             for msg in messages[-3:]:  # Show last 3 messages
-                print(f"  - {msg}")
+                log_parts.append(f"  - {msg}")
         
-        print('='*60)
-        input("Press Enter to continue...")  # Pause for user to review
+        log_parts.append('='*60)
+        
+        # Log the formatted state information
+        state_logger.info("\n".join(log_parts))
     
     def _create_workflow(self) -> StateGraph:
         """Create the LangGraph workflow"""

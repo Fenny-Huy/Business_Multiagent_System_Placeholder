@@ -27,6 +27,16 @@ def setup_logging(
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     
+    # Setup state change logger - this is a separate logger that goes to its own file
+    state_logger = logging.getLogger("agent_states")
+    state_logger.handlers.clear()
+    state_logger.setLevel(getattr(logging, log_level))
+    state_file_handler = logging.FileHandler(f"{log_dir}/state_changes.log")
+    state_file_formatter = logging.Formatter('%(asctime)s - %(message)s')
+    state_file_handler.setFormatter(state_file_formatter)
+    state_logger.addHandler(state_file_handler)
+    state_logger.propagate = False  # Don't propagate to root logger
+    
     # Configure structlog
     structlog.configure(
         processors=[
@@ -75,13 +85,18 @@ def setup_logging(
     )
 
 
-def get_logger(name: str) -> structlog.stdlib.BoundLogger:
-    """Get a structured logger
+def get_logger(name: str):
+    """Get a logger
     
     Args:
         name: Logger name
         
     Returns:
-        Configured structured logger
+        Configured logger - either a structlog logger or a standard logger for special cases
     """
+    # For state logging, return the standard logger we configured separately
+    if name == "agent_states":
+        return logging.getLogger(name)
+    
+    # For all other loggers, return a structlog logger
     return structlog.get_logger(name)
