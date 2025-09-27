@@ -66,7 +66,7 @@ You must respond with ONLY the name of the next agent (SearchAgent, AnalysisAgen
         
         # Include actual final response content for quality evaluation
         if final_response:
-            response_preview = final_response[:200] + "..." if len(final_response) > 200 else final_response
+            response_preview = final_response[:300] + ("..." if len(final_response) > 300 else final_response)
             context_parts.append(f"Current Final Response: {response_preview}")
         else:
             context_parts.append("Has Final Response: No")

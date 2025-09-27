@@ -99,14 +99,14 @@ class MultiAgentSystem:
         # Add final response preview
         final_response = state.get('final_response', '')
         if final_response:
-            preview = final_response[:100] + "..." if len(final_response) > 100 else final_response
+            preview = final_response[:300] + ("..." if len(final_response) > 300 else final_response)
             log_parts.append(f"\nResponse Preview: {preview}")
         
         # Add recent messages
         messages = state.get('messages', [])
         if messages:
             log_parts.append("\nRecent Messages:")
-            for msg in messages[-3:]:  # Show last 3 messages
+            for msg in messages[-5:]:  # Show last 5 messages
                 log_parts.append(f"  - {msg}")
         
         log_parts.append('='*60)
@@ -151,8 +151,7 @@ class MultiAgentSystem:
         """Supervisor agent node"""
         self.logger.info("Supervisor making routing decision...")
         
-        # Show current state before processing
-        self._display_state_change("SUPERVISOR (Before)", state)
+        
         
         updated_state = self.supervisor.process(state)
         
@@ -170,8 +169,7 @@ class MultiAgentSystem:
         """Search agent node"""
         self.logger.info("SearchAgent processing...")
         
-        # Show current state before processing
-        self._display_state_change("SEARCH AGENT (Before)", state)
+        
         
         updated_state = self.search_agent.process(state)
         
@@ -197,8 +195,7 @@ class MultiAgentSystem:
         """Analysis agent node"""
         self.logger.info("AnalysisAgent processing...")
         
-        # Show current state before processing
-        self._display_state_change("ANALYSIS AGENT (Before)", state)
+        
         
         updated_state = self.analysis_agent.process(state)
         
@@ -229,8 +226,7 @@ class MultiAgentSystem:
         """Response agent node"""
         self.logger.info("ResponseAgent processing...")
         
-        # Show current state before processing
-        self._display_state_change("RESPONSE AGENT (Before)", state)
+        
         
         updated_state = self.response_agent.process(state)
         
