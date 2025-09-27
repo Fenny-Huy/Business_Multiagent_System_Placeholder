@@ -108,8 +108,10 @@ Response:"""
         
         try:
             response = self.llm._call(prompt)
+            
         except Exception as e:
-            response = f"I apologize, but I encountered an error generating the response: {str(e)}"
+            self.logger.error(f"Error generating response: {str(e)}")
+            response = f"Error generating response: {str(e)}"
         
         # Update state with final response
         updated_state = state.copy()
