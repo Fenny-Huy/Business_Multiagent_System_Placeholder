@@ -1,10 +1,14 @@
-# langchain-demo-env.yml
-# Environment for LangChain Business Review Analysis Demo
-# Created from working biz-agent-gpu-2 environment
+# langgraph-multiagent-env.yml
+# Complete Environment for LangGraph Multi-Agent Business Intelligence System
 #
 # Usage:
 #   conda env create -f langchain-demo-env.yml
-#   conda activate langchain-demo
+#   conda activate multi-agent-env
+#   
+# OR create with pip:
+#   python -m venv venv
+#   source venv/bin/activate  # On Windows: venv\Scripts\activate
+#   pip install -r requirements.txt
 
 name: multi-agent-env
 channels:
@@ -49,40 +53,37 @@ dependencies:
   
   # Install via pip (latest compatible versions)
   - pip:
-      # Core LangChain packages
-      - langchain>=0.3.27
-      - langchain-community>=0.3.27
-      - langchain-core>=0.3.74
-      - langsmith>=0.4.16
-      
-      # Vector database - ChromaDB
-      - chromadb>=0.4.0
-      - langchain-chroma>=0.1.0
-      
-      # HuggingFace ecosystem
-      - transformers>=4.55.0
-      - sentence-transformers>=5.1.0
-      - huggingface-hub>=0.34.0
-      - tokenizers>=0.21.0
-      - safetensors>=0.6.0
-      
-      # Optional: Additional ML/NLP tools
-      - accelerate>=0.26.0
-      
-      # For better performance (optional)
-      - psutil>=7.0.0
-      
-      # Environment management
-      - python-dotenv>=1.1.0
-      - ijson>=3.4.0
-      - rapidfuzz
-      - keyring>=24.0.0
-
-      # Google Gemini API
-      - google-generativeai>=0.3.0
-      - google-auth>=2.17.0
-      - google-auth-oauthlib>=1.0.0
-
+      # === CORE LANGGRAPH & LANGCHAIN ===
       - langgraph>=0.2.0
-
+      - langchain>=0.3.0
+      - langchain-community>=0.3.0
+      - langchain-core>=0.3.75
+      - langsmith>=0.4.0
+      
+      # === OFFICIAL GOOGLE GENAI INTEGRATION ===
+      - langchain-google-genai>=2.1.0
+      - google-generativeai>=0.8.0
+      - google-api-core>=2.25.0
+      - google-auth>=2.40.0
+      
+      # === VECTOR DATABASES ===
+      - chromadb>=0.5.0
+      
+      # === ML & NLP TOOLS ===
+      - transformers>=4.45.0
+      - sentence-transformers>=3.0.0
+      - tokenizers>=0.19.0
+      - huggingface-hub>=0.20.0
+      - safetensors>=0.4.0
+      
+      # === UTILITIES ===
+      - python-dotenv>=1.0.0
+      - tenacity>=9.0.0
+      - ijson>=3.4.0
+      - rapidfuzz>=3.0.0
+      - keyring>=24.0.0
       - structlog>=23.0.0
+      
+      # === OPTIONAL PERFORMANCE (uncomment if needed) ===
+      # - accelerate>=0.34.0
+      # - psutil>=7.0.0
