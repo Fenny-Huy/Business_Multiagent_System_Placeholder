@@ -27,15 +27,28 @@ except ImportError:
     LANGCHAIN_GOOGLE_GENAI_AVAILABLE = False
     print("❌ langchain-google-genai package not available")
 
-# Import existing ChromaDB and sentiment analysis tools
+# Import organized tools system
 try:
-    from tools.business_search_tool import BusinessSearchTool
-    from tools.review_search_tool import ReviewSearchTool
-    from tools.sentiment_analysis_tool import SentimentAnalysisTool
-    TOOLS_AVAILABLE = True
-except ImportError:
-    print("⚠️ Warning: Custom tools not available. Using mock implementations.")
-    TOOLS_AVAILABLE = False
+    from tools import (
+        get_search_agent_tools, get_analysis_agent_tools, get_response_agent_tools,
+        create_agent_tools, get_tool_status, ALL_TOOLS
+    )
+    ORGANIZED_TOOLS_AVAILABLE = True
+    print("✓ Organized tools system loaded successfully")
+except ImportError as e:
+    print(f"⚠️ Warning: Organized tools system not available: {e}")
+    print("Falling back to direct imports...")
+    ORGANIZED_TOOLS_AVAILABLE = False
+    
+    # Fallback to direct imports
+    try:
+        from tools.business_search_tool import BusinessSearchTool
+        from tools.review_search_tool import ReviewSearchTool
+        from tools.sentiment_analysis_tool import SentimentAnalysisTool
+        TOOLS_AVAILABLE = True
+    except ImportError:
+        print("⚠️ Warning: Custom tools not available. Using mock implementations.")
+        TOOLS_AVAILABLE = False
 
 # Environment setup
 try:
@@ -44,18 +57,197 @@ try:
 except ImportError:
     pass
 
-# Initialize external tools if available
-if TOOLS_AVAILABLE:
+# Initialize external tools based on available system
+if ORGANIZED_TOOLS_AVAILABLE:
+    try:
+        # Get tool status and create instances
+        tool_status = get_tool_status()
+        print(f"✓ Tool system initialized: {tool_status['available_tools']}/{tool_status['total_tools']} tools available")
+        
+        # Create tool instances for backward compatibility
+        try:
+            from tools import create_tool_instance
+            business_tool = create_tool_instance('business_search')
+            review_tool = create_tool_instance('review_search')
+            sentiment_tool = create_tool_instance('sentiment_analysis')
+            TOOLS_AVAILABLE = True
+        except Exception as e:
+            print(f"⚠️ Warning: Could not create tool instances: {e}")
+            TOOLS_AVAILABLE = False
+            
+    except Exception as e:
+        print(f"⚠️ Warning: Could not initialize organized tools: {e}")
+        ORGANIZED_TOOLS_AVAILABLE = False
+        TOOLS_AVAILABLE = False
+elif TOOLS_AVAILABLE:
     try:
         business_tool = BusinessSearchTool()
         review_tool = ReviewSearchTool()
         sentiment_tool = SentimentAnalysisTool()
-        print("✓ All external tools initialized successfully")
+        print("✓ All external tools initialized successfully (direct import)")
     except Exception as e:
         print(f"⚠️ Warning: Could not initialize external tools: {e}")
         TOOLS_AVAILABLE = False
 
 # --- Step 1: Define LangGraph Tools ---
+
+# Helper function to create LangGraph tools from organized tool instances
+def create_enhanced_tools():
+    """Create enhanced LangGraph tools using the organized tool system"""
+    enhanced_tools = {}
+    
+    if ORGANIZED_TOOLS_AVAILABLE:
+        try:
+            from tools import create_tool_instance
+            
+            # Create hybrid retrieval tool wrapper
+            hybrid_tool_instance = create_tool_instance('hybrid_retrieval')
+            if hybrid_tool_instance:
+                @tool
+                def hybrid_retrieval_tool(business_id: str, query: str, top_k: int = 10) -> str:
+                    """
+                    Advanced semantic search with business filtering and evidence generation.
+                    Use this for complex search queries that need detailed evidence.
+                    
+                    Args:
+                        business_id: Target business identifier
+                        query: Search query string
+                        top_k: Maximum number of results to return (default: 10)
+                    
+                    Returns:
+                        JSON string containing search results with evidence
+                    """
+                    print(f"🔍 TOOL CALL: hybrid_retrieval_tool(business_id='{business_id}', query='{query}', top_k={top_k})")
+                    try:
+                        results = hybrid_tool_instance(business_id=business_id, query=query, top_k=top_k)
+                        return json.dumps(results, indent=2)
+                    except Exception as e:
+                        return json.dumps({"error": f"Hybrid retrieval failed: {str(e)}"})
+                
+                enhanced_tools['hybrid_retrieval'] = hybrid_retrieval_tool
+            
+            # Create business pulse tool wrapper
+            business_pulse_instance = create_tool_instance('business_pulse')
+            if business_pulse_instance:
+                @tool
+                def business_pulse_tool(business_id: str, time_range: str = "all") -> str:
+                    """
+                    Get business health metrics and sanity checks.
+                    Use this to assess overall business performance and identify issues.
+                    
+                    Args:
+                        business_id: Target business identifier  
+                        time_range: Time range filter ('3M', '6M', '1Y', 'all')
+                    
+                    Returns:
+                        JSON string containing business health metrics
+                    """
+                    print(f"📊 TOOL CALL: business_pulse_tool(business_id='{business_id}', time_range='{time_range}')")
+                    try:
+                        results = business_pulse_instance(business_id=business_id, time_range=time_range)
+                        return json.dumps(results, indent=2)
+                    except Exception as e:
+                        return json.dumps({"error": f"Business pulse analysis failed: {str(e)}"})
+                
+                enhanced_tools['business_pulse'] = business_pulse_tool
+            
+            # Create aspect analysis tool wrapper
+            aspect_analysis_instance = create_tool_instance('aspect_analysis')
+            if aspect_analysis_instance:
+                @tool
+                def aspect_analysis_tool(business_id: str = None, max_reviews: int = 100) -> str:
+                    """
+                    Perform aspect-based sentiment analysis on reviews.
+                    Use this to identify specific aspects customers mention in reviews.
+                    
+                    Args:
+                        business_id: Optional business ID to filter reviews
+                        max_reviews: Maximum number of reviews to analyze
+                    
+                    Returns:
+                        JSON string containing aspect analysis results
+                    """
+                    print(f"🔬 TOOL CALL: aspect_analysis_tool(business_id='{business_id}', max_reviews={max_reviews})")
+                    try:
+                        reviews = aspect_analysis_instance.read_data(business_id=business_id)
+                        if len(reviews) > max_reviews:
+                            reviews = reviews[:max_reviews]
+                        results = aspect_analysis_instance.analyze_aspects(reviews[:max_reviews])
+                        return json.dumps(results, indent=2)
+                    except Exception as e:
+                        return json.dumps({"error": f"Aspect analysis failed: {str(e)}"})
+                
+                enhanced_tools['aspect_analysis'] = aspect_analysis_tool
+            
+            # Create action planner tool wrapper
+            action_planner_instance = create_tool_instance('action_planner')
+            if action_planner_instance:
+                @tool
+                def action_planner_tool(business_id: str = None, priority_issues: str = "quality,service") -> str:
+                    """
+                    Generate actionable business improvement plans.
+                    Use this to create specific recommendations for business improvement.
+                    
+                    Args:
+                        business_id: Optional business ID for targeted analysis
+                        priority_issues: Comma-separated priority issues (quality,service,value,customer_experience)
+                    
+                    Returns:
+                        JSON string containing action plan with steps and timelines
+                    """
+                    print(f"📋 TOOL CALL: action_planner_tool(business_id='{business_id}', priority_issues='{priority_issues}')")
+                    try:
+                        issues = [issue.strip() for issue in priority_issues.split(",")]
+                        results = action_planner_instance(
+                            business_id=business_id,
+                            priority_issues=issues,
+                            constraints={"budget": 10000, "timeline_weeks": 8}
+                        )
+                        return json.dumps(results, indent=2)
+                    except Exception as e:
+                        return json.dumps({"error": f"Action planning failed: {str(e)}"})
+                
+                enhanced_tools['action_planner'] = action_planner_tool
+            
+            # Create review response tool wrapper
+            review_response_instance = create_tool_instance('review_response')
+            if review_response_instance:
+                @tool
+                def review_response_tool(business_id: str, review_text: str, response_tone: str = "professional") -> str:
+                    """
+                    Generate personalized responses to customer reviews.
+                    Use this to craft appropriate responses to negative reviews or feedback.
+                    
+                    Args:
+                        business_id: Target business identifier
+                        review_text: The review content to respond to
+                        response_tone: Tone for response ('professional', 'friendly', 'formal')
+                    
+                    Returns:
+                        JSON string containing generated response and analysis
+                    """
+                    print(f"💬 TOOL CALL: review_response_tool(business_id='{business_id}', tone='{response_tone}')")
+                    try:
+                        results = review_response_instance(
+                            business_id=business_id, 
+                            review_text=review_text,
+                            response_tone=response_tone
+                        )
+                        return json.dumps(results, indent=2)
+                    except Exception as e:
+                        return json.dumps({"error": f"Review response generation failed: {str(e)}"})
+                
+                enhanced_tools['review_response'] = review_response_tool
+            
+            print(f"✅ Created {len(enhanced_tools)} enhanced LangGraph tools")
+            
+        except Exception as e:
+            print(f"⚠️ Warning: Could not create enhanced tools: {e}")
+    
+    return enhanced_tools
+
+# Create enhanced tools at module level
+ENHANCED_TOOLS = create_enhanced_tools()
 
 @tool
 def review_search_tool(query: str, business_id: str = None, max_results: int = 5) -> str:
@@ -325,63 +517,125 @@ def get_llm():
 # --- Step 3: Create Worker Agents with create_react_agent ---
 
 def create_agents(llm):
-    """Create all worker agents using create_react_agent"""
+    """Create all worker agents using create_react_agent with organized tools"""
     
-    # SearchAgent - specializes in finding business data and reviews
+    # Base LangGraph tool wrappers (always available)
+    base_search_tools = [review_search_tool, business_search_tool]
+    base_analysis_tools = [sentiment_analysis_tool]
+    base_response_tools = []
+    
+    # Enhanced tools from organized system
+    enhanced_search_tools = []
+    enhanced_analysis_tools = []
+    enhanced_response_tools = []
+    
+    # Add enhanced tools if available
+    if ORGANIZED_TOOLS_AVAILABLE and ENHANCED_TOOLS:
+        print("🔧 Creating agents with organized tool system...")
+        
+        # Categorize enhanced tools by agent type
+        if 'hybrid_retrieval' in ENHANCED_TOOLS:
+            enhanced_search_tools.append(ENHANCED_TOOLS['hybrid_retrieval'])
+        
+        if 'business_pulse' in ENHANCED_TOOLS:
+            enhanced_analysis_tools.append(ENHANCED_TOOLS['business_pulse'])
+        
+        if 'aspect_analysis' in ENHANCED_TOOLS:
+            enhanced_analysis_tools.append(ENHANCED_TOOLS['aspect_analysis'])
+        
+        if 'action_planner' in ENHANCED_TOOLS:
+            enhanced_response_tools.append(ENHANCED_TOOLS['action_planner'])
+        
+        if 'review_response' in ENHANCED_TOOLS:
+            enhanced_response_tools.append(ENHANCED_TOOLS['review_response'])
+        
+        print(f"📊 Enhanced tools available:")
+        print(f"  - SearchAgent: {len(enhanced_search_tools)} additional tools")
+        print(f"  - AnalysisAgent: {len(enhanced_analysis_tools)} additional tools")
+        print(f"  - ResponseAgent: {len(enhanced_response_tools)} additional tools")
+    
+    # Combine base and enhanced tools for each agent
+    search_tools = base_search_tools + enhanced_search_tools
+    analysis_tools = base_analysis_tools + enhanced_analysis_tools
+    response_tools = base_response_tools + enhanced_response_tools
+    
+    # SearchAgent - Enhanced with organized search tools
     search_agent = create_react_agent(
         llm,
-        tools=[review_search_tool, business_search_tool],
+        tools=search_tools,
         name="SearchAgent",
         prompt="""You are a research specialist in a business intelligence system. 
 Your primary role is to gather comprehensive information using your search tools.
 
-INSTRUCTIONS:
-1. Use business_search_tool to find business information (ratings, addresses, categories)
-2. Use review_search_tool to find customer reviews and opinions
-3. Always search broadly first, then narrow down if needed
-4. Provide detailed, structured information from your searches
-5. If searching for a specific business, try different variations of the name
+AVAILABLE TOOLS:
+- business_search_tool: Find business information (ratings, addresses, categories, descriptions)
+- review_search_tool: Find customer reviews and opinions with semantic search
+- hybrid_retrieval_tool: Advanced semantic search with evidence generation (if available)
 
-Be thorough and methodical in your research."""
+INSTRUCTIONS:
+1. Start with business_search_tool to find basic business information
+2. Use review_search_tool to find relevant customer reviews and feedback
+3. For complex queries requiring detailed evidence, use hybrid_retrieval_tool
+4. Search broadly first, then narrow down with specific filters if needed
+5. Provide detailed, structured information from your searches
+6. If searching for a specific business, try different variations of the name
+7. Always include confidence scores and relevance metrics when available
+
+Be thorough and methodical in your research. Your findings will be used by analysis and response agents."""
     )
     
-    # AnalysisAgent - specializes in analyzing data, especially sentiment
+    # AnalysisAgent - Enhanced with organized analysis tools
     analysis_agent = create_react_agent(
         llm,
-        tools=[sentiment_analysis_tool],
+        tools=analysis_tools,
         name="AnalysisAgent", 
         prompt="""You are an analysis expert in a business intelligence system.
-Your role is to analyze data provided by other agents, especially performing sentiment analysis.
+Your role is to analyze data provided by other agents and extract actionable insights.
 
-INSTRUCTIONS:
-1. Use sentiment_analysis_tool to analyze customer review text
-2. Look for patterns in customer feedback
-3. Provide clear summaries of sentiment trends
-4. Identify key positive and negative themes
-5. Quantify sentiment where possible (percentages, confidence scores)
+AVAILABLE TOOLS:
+- sentiment_analysis_tool: Analyze sentiment in customer reviews and feedback
+- business_pulse_tool: Business health metrics and sanity checks (if available)
+- aspect_analysis_tool: Advanced aspect-based sentiment analysis (if available)
 
-Focus on extracting actionable insights from the data."""
+INSTRUCTIONS:  
+1. Use sentiment_analysis_tool to analyze customer review sentiment and trends
+2. For business health assessment, use business_pulse_tool to identify red flags
+3. For detailed insights, use aspect_analysis_tool to identify specific aspects customers mention
+4. Look for patterns in customer feedback across different time periods
+5. Provide clear summaries with quantified metrics (percentages, confidence scores)
+6. Identify key positive and negative themes with supporting evidence
+7. Highlight unusual patterns or potential data quality issues
+
+Focus on extracting actionable insights that business owners can use to improve."""
     )
     
-    # ResponseAgent - synthesizes final answers
+    # ResponseAgent - Enhanced with organized response tools  
     response_agent = create_react_agent(
         llm,
-        tools=[], 
+        tools=response_tools,
         name="ResponseAgent",
         prompt="""You are the final response synthesizer in a business intelligence system.
-Your task is to create comprehensive, well-structured answers for users.
+Your task is to create comprehensive, well-structured answers and recommendations.
+
+AVAILABLE TOOLS:
+- action_planner_tool: Generate actionable business improvement plans (if available)
+- review_response_tool: Create personalized responses to customer reviews (if available)
 
 INSTRUCTIONS:
-1. Synthesize information from search results and analysis
-2. Structure your response clearly with headers and bullet points
-3. Include specific data points (ratings, review counts, sentiment percentages)
-4. Provide actionable insights and recommendations
-5. Address the user's original question directly
-6. Keep responses informative but concise
+1. Synthesize information from search results and analysis into coherent insights
+2. Use action_planner_tool to generate specific improvement recommendations when appropriate
+3. Use review_response_tool to craft responses to negative reviews or feedback patterns
+4. Structure responses clearly with headers, bullet points, and numbered lists
+5. Include specific data points (ratings, review counts, sentiment percentages, dates)
+6. Provide actionable insights and next steps for business improvement
+7. Address the user's original question directly and comprehensively
+8. Keep responses professional but accessible to business owners
 
-Create responses that are professional, helpful, and easy to understand."""
+Create responses that are informative, actionable, and easy to implement."""
     )
     
+    total_tools = len(search_tools) + len(analysis_tools) + len(response_tools)
+    print(f"✅ All agents created with {total_tools} total tools across all agents")
     return search_agent, analysis_agent, response_agent
 
 # --- Step 4: Define State and Create Manual Supervisor ---
