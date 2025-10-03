@@ -18,9 +18,16 @@ from config.logging_config import setup_logging, get_logger
 class AgentState(TypedDict):
     """State shared between all agents"""
     user_query: str
+    # Legacy fields for backward compatibility
     search_results: Dict[str, Any]
     analysis_results: Dict[str, Any] 
     final_response: str
+    # New optimized fields with note/result separation
+    search_agent_note: str
+    search_agent_result: Dict[str, Any]
+    analysis_agent_note: str
+    analysis_agent_result: Dict[str, Any]
+    # Control fields
     last_agent: str
     next_agent: str
     completed: bool

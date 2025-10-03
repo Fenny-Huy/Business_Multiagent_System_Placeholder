@@ -53,40 +53,50 @@ You must respond with ONLY the name of the next agent (SearchAgent, AnalysisAgen
         """Determine the next agent to route to"""
         user_query = state.get("user_query", "")
         last_agent = state.get("last_agent", "")
-        search_results = state.get("search_results", {})
-        analysis_results = state.get("analysis_results", {})
+        
+        # Use efficient note-based routing instead of full results
+        search_agent_note = state.get("search_agent_note", "")
+        analysis_agent_note = state.get("analysis_agent_note", "")
         final_response = state.get("final_response", "")
         
-        # Build context for decision making
+        # Build context for decision making using notes for efficiency
         context_parts = []
         context_parts.append(f"User Query: {user_query}")
         context_parts.append(f"Last Agent: {last_agent}")
-        context_parts.append(f"Has Search Results: {'Yes' if search_results else 'No'}")
-        context_parts.append(f"Has Analysis Results: {'Yes' if analysis_results else 'No'}")
+        
+        # Use concise notes instead of full results
+        if search_agent_note:
+            context_parts.append(f"Search Agent Note: {search_agent_note}")
+        else:
+            context_parts.append("Search: Not completed")
+            
+        if analysis_agent_note:
+            context_parts.append(f"Analysis Agent Note: {analysis_agent_note}")
+        else:
+            context_parts.append("Analysis: Not completed")
         
         # Include actual final response content for quality evaluation
         if final_response:
             response_preview = final_response[:300] + ("..." if len(final_response) > 300 else final_response)
             context_parts.append(f"Current Final Response: {response_preview}")
         else:
-            context_parts.append("Has Final Response: No")
+            context_parts.append("Final Response: Not completed")
         
         context = "\\n".join(context_parts)
         
         # Create decision prompt
-        decision_prompt = f"""Based on the current state, decide which agent should handle the next step:
+        decision_prompt = f"""Based on the current workflow state, decide which agent should handle the next step:
 
 {context}
 
-Current State Analysis:
-- If no search has been done yet, route to SearchAgent
-- If we have search results but no analysis, route to AnalysisAgent
-- If we have data but no final response, route to ResponseAgent
-- If we have a final response, review it:
-  * Does it appear to be a complete response that addresses the user query?
-  * If the response seems incomplete or problematic, you can route to ResponseAgent again
+Workflow Analysis:
+- If Search Agent hasn't run yet (no search note), route to SearchAgent
+- If we have search notes but no analysis note, route to AnalysisAgent  
+- If we have both search and analysis notes but no final response, route to ResponseAgent
+- If we have a final response, evaluate if it's complete and addresses the user query
+- If the response seems incomplete, you can route to ResponseAgent again for improvement
 
-When you've reviewed the information, decide on the next step.
+The notes provide concise summaries of what each agent accomplished.
 
 Your decision (respond with ONLY the agent name or FINISH):"""
         
@@ -97,11 +107,11 @@ Your decision (respond with ONLY the agent name or FINISH):"""
             valid_choices = self.available_agents + ["FINISH"]
             if decision not in valid_choices:
                 # Default routing logic if LLM gives invalid response
-                decision = self._get_fallback_decision(search_results, analysis_results, final_response)
+                decision = self._get_fallback_decision(search_agent_note, analysis_agent_note, final_response)
             
         except Exception as e:
             # Fallback routing logic
-            decision = self._get_fallback_decision(search_results, analysis_results, final_response)
+            decision = self._get_fallback_decision(search_agent_note, analysis_agent_note, final_response)
         
         # Update state with routing decision
         updated_state = state.copy()
@@ -110,11 +120,11 @@ Your decision (respond with ONLY the agent name or FINISH):"""
         
         return updated_state
     
-    def _get_fallback_decision(self, search_results: Dict[str, Any], analysis_results: Dict[str, Any], final_response: str) -> str:
-        """Simple fallback decision logic"""
-        if not search_results:
+    def _get_fallback_decision(self, search_agent_note: str, analysis_agent_note: str, final_response: str) -> str:
+        """Simple fallback decision logic using note-based approach"""
+        if not search_agent_note:
             return "SearchAgent"
-        elif search_results and not analysis_results:
+        elif search_agent_note and not analysis_agent_note:
             return "AnalysisAgent"
         elif not final_response:
             return "ResponseAgent"
