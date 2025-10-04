@@ -99,7 +99,11 @@ class SearchAgent:
 
     def _create_react_prompt(self) -> PromptTemplate:
         """Create the ReAct prompt template for SearchAgent"""
-        return PromptTemplate.from_template("""
+        # Define the input variables explicitly to avoid parsing issues
+        input_variables = ["tools", "input", "agent_scratchpad"]
+        return PromptTemplate(
+            input_variables=input_variables,
+            template="""
 You are a business review search agent with access to a vector database of reviews and business information.
 Your mission is to find relevant reviews and business data to help answer user queries.
 
@@ -153,25 +157,26 @@ Action: the action to take, should be one of [{tool_names}]
 Action Input: the input to the action
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
+
 Final Answer: ```json
-{
+{{
   "note": "Brief summary of findings",
-  "result": {
-    "tool_outputs": {
+  "result": {{
+    "tool_outputs": {{
       "tool_name_1": [exact output from tool 1],
       "tool_name_2": [exact output from tool 2]
-    },
+    }},
     "query_processed": "Query I processed",
     "reasoning_summary": "How I approached this search"
-  }
-}
+  }}
+}}
 ```
 
 Begin!
 
 Question: {input}
-Thought: {agent_scratchpad}""")
+Thought: {agent_scratchpad}"""
+        )
 
     def get_system_prompt(self) -> str:
         """Return the system prompt for the search agent"""
@@ -207,7 +212,8 @@ Please search for business information related to this query. Use the appropriat
         try:
             # Execute the ReAct agent
             result = self.agent_executor.invoke({
-                "input": task
+                "input": task,
+                "agent_scratchpad": ""  # Initialize agent_scratchpad
             })
             
             # Extract the response

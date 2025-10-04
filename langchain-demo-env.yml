@@ -88,5 +88,5 @@ dependencies:
       # - accelerate>=0.34.0
       # - psutil>=7.0.0
 
-      - rapidfuzz
+      
       - duckdb
