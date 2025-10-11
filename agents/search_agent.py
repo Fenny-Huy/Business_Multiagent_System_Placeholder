@@ -92,7 +92,7 @@ class SearchAgent:
             tools=self.tools, 
             verbose=True,
             handle_parsing_errors=True,
-            max_iterations=5
+              max_iterations=10  # Increased to allow more tool calls before timeout
         )
         
         print(f"✓ SearchAgent initialized with ReAct pattern")
@@ -126,11 +126,15 @@ REASONING APPROACH:
 2. Select appropriate tools to retrieve the necessary data
 3. Execute the tools in a logical sequence
 4. Compile the results in a structured format that preserves all information
+5. Stop and provide Final Answer once you have sufficient information
 
 REQUIRED OUTPUT FORMAT:
-Your Final Answer MUST be structured as a valid JSON object with the following format:
+⚠️ CRITICAL: Your output MUST start with "Final Answer: " followed by a valid JSON object with the format below.
+⚠️ DO NOT output raw JSON without "Final Answer: " prefix - this causes parsing errors!
 
-```json
+The complete format you MUST use:
+
+Final Answer: ```json
 {{
   "note": "Brief 1-2 sentence summary of what you found",
   "result": {{
@@ -145,8 +149,11 @@ Your Final Answer MUST be structured as a valid JSON object with the following f
 }}
 ```
 
-Include the EXACT raw outputs from each tool under the appropriate tool name.
-Do NOT reformat, restructure, or modify the tool outputs in any way.
+IMPORTANT RULES:
+- ALWAYS start with "Final Answer: "
+- Include the EXACT raw outputs from each tool under the appropriate tool name
+- Do NOT reformat, restructure, or modify the tool outputs in any way
+- Do NOT output ```json without "Final Answer: " prefix
 
 REQUIRED EXECUTION FORMAT:
 Follow this exact format when executing your search:
@@ -160,17 +167,23 @@ Observation: the result of the action
 
 Final Answer: ```json
 {{
-  "note": "Brief summary of findings",
+  "note": "Brief summary of what I found",
   "result": {{
     "tool_outputs": {{
       "tool_name_1": [exact output from tool 1],
       "tool_name_2": [exact output from tool 2]
     }},
     "query_processed": "Query I processed",
-    "reasoning_summary": "How I approached this search"
+    "reasoning_summary": "My search approach and findings"
   }}
 }}
 ```
+
+FINAL REMINDERS - READ CAREFULLY:
+1. You MUST output "Final Answer: " before your JSON (NOT just ```json by itself)
+2. Without "Final Answer: " prefix, you will get "Invalid Format" errors
+3. After 2-4 tool calls, conclude with your Final Answer
+4. Example: "Final Answer: ```json ... ```" ← Notice "Final Answer: " at the start!
 
 Begin!
 
