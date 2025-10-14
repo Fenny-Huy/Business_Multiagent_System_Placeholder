@@ -1,72 +1,73 @@
 from typing import Dict, Any, List
+import re
+import json
 
 def _parse_structured_output(agent_output: str) -> tuple[str, Dict[str, Any]]:
-        """Parse the structured output from the agent"""
-        import re
-        import json
+  """Parse the structured output from the agent"""
+
+
+
+  # Extract JSON from the agent output
+  json_match = re.search(r'```json\s*(.*?)\s*```', agent_output, re.DOTALL)
+
+  if json_match:
+    try:
+        json_data = json.loads(json_match.group(1))
         
+        # Extract note and result from the JSON structure
+        note = json_data.get("note", "SearchAgent completed search task")
+        result = json_data.get("result", {})
         
-        # Extract JSON from the agent output
-        json_match = re.search(r'```json\s*(.*?)\s*```', agent_output, re.DOTALL)
+        # Store the full output for reference
+        result["full_agent_output"] = agent_output
         
-        if json_match:
-            try:
-                json_data = json.loads(json_match.group(1))
-                
-                # Extract note and result from the JSON structure
-                note = json_data.get("note", "SearchAgent completed search task")
-                result = json_data.get("result", {})
-                
-                # Store the full output for reference
-                result["full_agent_output"] = agent_output
-                
-                # Create a backward compatible structure for search_results
-                search_results = {}
-                
-                # Extract data from tool outputs for backward compatibility
-                tool_outputs = result.get("tool_outputs", {})
-                
-                # Extract businesses and reviews from tool outputs
-                businesses = []
-                reviews = []
-                
-                # Look for business data in tool outputs
-                for tool_name, output in tool_outputs.items():
-                    # Get business data from business search tools
-                    if "business" in tool_name.lower() and isinstance(output, list):
-                        businesses.extend(output)
-                    elif isinstance(output, dict) and "businesses" in output:
-                        businesses.extend(output["businesses"])
-                    
-                    # Get review data from review search tools
-                    if "review" in tool_name.lower() and isinstance(output, list):
-                        reviews.extend(output)
-                    elif isinstance(output, dict) and "reviews" in output:
-                        reviews.extend(output["reviews"])
-                
-                # Add to structured result for backward compatibility
-                search_results["businesses"] = businesses
-                search_results["reviews"] = reviews
-                result["search_results"] = search_results
-                
-                # Debug logging
-                print(f"✅ Successfully parsed structured output")
-                print(f"  - Note: {note[:50]}...")
-                print(f"  - Tool outputs found: {list(tool_outputs.keys())}")
-                print(f"  - Businesses found: {len(businesses)}")
-                print(f"  - Reviews found: {len(reviews)}")
-                
-                return note, result
-                
-            except json.JSONDecodeError as e:
-                print(f"⚠️ Failed to parse JSON from agent output: {e}")
-                print(f"⚠️ JSON snippet that failed parsing: {json_match.group(1)[:100]}...")
-                return f"SearchAgent encountered error: {e}", {"error": str(e), "full_output": agent_output}
-        else:
-            # Fallback if no JSON found - this shouldn't happen if agent follows instructions
-            print("⚠️ No JSON structure found in agent output")
-            print(f"⚠️ Agent output: {agent_output[:200]}...")
-            return "SearchAgent completed task (no structured output)", {"full_output": agent_output}
+        # Create a backward compatible structure for search_results
+        search_results = {}
+        
+        # Extract data from tool outputs for backward compatibility
+        tool_outputs = result.get("tool_outputs", {})
+        
+        # Extract businesses and reviews from tool outputs
+        businesses = []
+        reviews = []
+        
+        # Look for business data in tool outputs
+        for tool_name, output in tool_outputs.items():
+            # Get business data from business search tools
+            if "business" in tool_name.lower() and isinstance(output, list):
+                businesses.extend(output)
+            elif isinstance(output, dict) and "businesses" in output:
+                businesses.extend(output["businesses"])
+            
+            # Get review data from review search tools
+            if "review" in tool_name.lower() and isinstance(output, list):
+                reviews.extend(output)
+            elif isinstance(output, dict) and "reviews" in output:
+                reviews.extend(output["reviews"])
+        
+        # Add to structured result for backward compatibility
+        search_results["businesses"] = businesses
+        search_results["reviews"] = reviews
+        result["search_results"] = search_results
+        
+        # Debug logging
+        print(f"✅ Successfully parsed structured output")
+        print(f"  - Note: {note[:50]}...")
+        print(f"  - Tool outputs found: {list(tool_outputs.keys())}")
+        print(f"  - Businesses found: {len(businesses)}")
+        print(f"  - Reviews found: {len(reviews)}")
+        
+        return note, result
+        
+    except json.JSONDecodeError as e:
+        print(f"⚠️ Failed to parse JSON from agent output: {e}")
+        print(f"⚠️ JSON snippet that failed parsing: {json_match.group(1)[:100]}...")
+        return f"SearchAgent encountered error: {e}", {"error": str(e), "full_output": agent_output}
+  else:
+    # Fallback if no JSON found - this shouldn't happen if agent follows instructions
+    print("⚠️ No JSON structure found in agent output")
+    print(f"⚠️ Agent output: {agent_output[:200]}...")
+    return "SearchAgent completed task (no structured output)", {"full_output": agent_output}
         
 
 
