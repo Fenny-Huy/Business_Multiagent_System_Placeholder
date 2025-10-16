@@ -17,5 +17,5 @@ business_search_tool = BusinessSearchTool(host=chroma_host)
 # search_business = business_search_tool.search_businesses("Vietnamese", k=3)
 # print(f"Search business result: {search_business}")
 
-get_business_info = business_search_tool.get_business_info(business_id="3sjFioCSd1xLXbk4hZCh1Q")
+get_business_info = business_search_tool.get_business_info(business_id="eEOYSgkmpB90uNA7lDOMRA")
 print(f"Get business info result: {get_business_info}")
