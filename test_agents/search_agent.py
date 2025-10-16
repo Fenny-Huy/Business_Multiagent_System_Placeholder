@@ -64,8 +64,8 @@ class SearchAgent:
                 description="Semantic search for businesses. Return a business record. Input should be a string (query/description) or a dict with 'query' and optional 'k'. Input query represent any information about the business",
                 func=lambda input: (
                     print(f"[TOOL CALLED] search_businesses with input: {input}") or
-                    (self.business_search_tool.search_businesses(input, k=5) if isinstance(input, str)
-                    else self.business_search_tool.search_businesses(input.get("query", ""), k=input.get("k", 5)))
+                    (self.business_search_tool.search_businesses(input, k=2) if isinstance(input, str)
+                    else self.business_search_tool.search_businesses(input.get("query", ""), k=input.get("k", 2)))
                 )
 
             ),
@@ -139,8 +139,8 @@ Final Answer: ```json
   "note": "Brief 1-2 sentence summary of what you found",
   "result": {{
     "tool_outputs": {{
-      "tool_name_1": [exact output from the first tool you used, make it appropriate JSON format, do not put the output in quotes as a string],
-      "tool_name_2": [exact output from the first tool you used, make it appropriate JSON format, do not put the output in quotes as a string],
+      "tool_name_1": [exact output from the tool you used, do not put the output in quotes as a string],
+      "tool_name_2": [exact output from the tool you used, do not put the output in quotes as a string],
       ...
     }},
     "query_processed": "The query you processed",
@@ -210,9 +210,135 @@ When searching:
 
 Be thorough but concise in your responses."""
     
-    def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
+#     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
+#         """Process search requests using the ReAct agent"""
+#         user_query = state.get("user_query", "")
+        
+#         # Create the task description
+#         task = f"""Find relevant information about: "{user_query}"
+        
+# Please search for business information related to this query. Use the appropriate search tools to gather comprehensive information:
+# 1. If the query is for a specific business by name, try to identify the business_id
+# 2. If the query is more general, search for relevant businesses
+# 3. Gather detailed information about any businesses you find"""
+        
+#         try:
+#             # Execute the ReAct agent
+#             result = self.agent_executor.invoke({
+#                 "input": task,
+#                 "agent_scratchpad": ""  # Initialize agent_scratchpad
+#             })
+            
+#             # Extract the response
+#             agent_output = result.get("output", "")
+            
+#             # Parse the structured output according to the new format
+#             note, structured_result = self._parse_structured_output(agent_output)
+            
+#             # Update state with both note and detailed results
+#             updated_state = state.copy()
+#             updated_state["search_agent_note"] = note
+#             updated_state["search_agent_result"] = structured_result
+#             updated_state["last_agent"] = self.agent_name
+            
+#             # Maintain backward compatibility with legacy search_results field
+#             search_results = structured_result.get("search_results", {
+#                 "businesses": [],
+#                 "reviews": []
+#             })
+#             updated_state["search_results"] = search_results
+            
+#             # Add summary to messages
+#             messages = updated_state.get("messages", [])
+#             messages.append(note)
+#             updated_state["messages"] = messages
+            
+#             return updated_state
+            
+#         except Exception as e:
+#             error_msg = f"Error in {self.agent_name}: {str(e)}"
+#             print(f"❌ {error_msg}")
+            
+#             updated_state = state.copy()
+#             updated_state["search_agent_note"] = f"SearchAgent encountered an error: {str(e)}"
+#             updated_state["search_agent_result"] = {"error": str(e)}
+#             updated_state["search_results"] = {"businesses": [], "reviews": [], "error": str(e)}
+#             updated_state["last_agent"] = self.agent_name
+            
+#             return updated_state
+
+    # def _parse_structured_output(self, agent_output: str) -> tuple[str, Dict[str, Any]]:
+    #     """Parse the structured output from the agent"""
+    #     import re
+        
+    #     # Extract JSON from the agent output
+    #     json_match = re.search(r'```json\s*(.*?)\s*```', agent_output, re.DOTALL)
+        
+    #     if json_match:
+    #         try:
+    #             json_data = json.loads(json_match.group(1))
+                
+    #             # Extract note and result from the JSON structure
+    #             note = json_data.get("note", "SearchAgent completed search task")
+    #             result = json_data.get("result", {})
+                
+    #             # Store the full output for reference
+    #             result["full_agent_output"] = agent_output
+                
+    #             # Create a backward compatible structure for search_results
+    #             search_results = {}
+                
+    #             # Extract data from tool outputs for backward compatibility
+    #             tool_outputs = result.get("tool_outputs", {})
+                
+    #             # Extract businesses and reviews from tool outputs
+    #             businesses = []
+    #             reviews = []
+                
+    #             # Look for business data in tool outputs
+    #             for tool_name, output in tool_outputs.items():
+    #                 # Get business data from business search tools
+    #                 if "business" in tool_name.lower() and isinstance(output, list):
+    #                     businesses.extend(output)
+    #                 elif isinstance(output, dict) and "businesses" in output:
+    #                     businesses.extend(output["businesses"])
+                    
+    #                 # Get review data from review search tools
+    #                 if "review" in tool_name.lower() and isinstance(output, list):
+    #                     reviews.extend(output)
+    #                 elif isinstance(output, dict) and "reviews" in output:
+    #                     reviews.extend(output["reviews"])
+                
+    #             # Add to structured result for backward compatibility
+    #             search_results["businesses"] = businesses
+    #             search_results["reviews"] = reviews
+    #             result["search_results"] = search_results
+                
+    #             # Debug logging
+    #             print(f"✅ Successfully parsed structured output")
+    #             print(f"  - Note: {note[:50]}...")
+    #             print(f"  - Tool outputs found: {list(tool_outputs.keys())}")
+    #             print(f"  - Businesses found: {len(businesses)}")
+    #             print(f"  - Reviews found: {len(reviews)}")
+                
+    #             return note, result
+                
+    #         except json.JSONDecodeError as e:
+    #             print(f"⚠️ Failed to parse JSON from agent output: {e}")
+    #             print(f"⚠️ JSON snippet that failed parsing: {json_match.group(1)[:100]}...")
+    #             return f"SearchAgent encountered error: {e}", {"error": str(e), "full_output": agent_output}
+    #     else:
+    #         # Fallback if no JSON found - this shouldn't happen if agent follows instructions
+    #         print("⚠️ No JSON structure found in agent output")
+    #         print(f"⚠️ Agent output: {agent_output[:200]}...")
+    #         return "SearchAgent completed task (no structured output)", {"full_output": agent_output}
+        
+
+
+
+    def process(self, user_query: str):
         """Process search requests using the ReAct agent"""
-        user_query = state.get("user_query", "")
+        
         
         # Create the task description
         task = f"""Find relevant information about: "{user_query}"
@@ -232,104 +358,15 @@ Please search for business information related to this query. Use the appropriat
             # Extract the response
             agent_output = result.get("output", "")
             
-            # Parse the structured output according to the new format
-            note, structured_result = self._parse_structured_output(agent_output)
-            
-            # Update state with both note and detailed results
-            updated_state = state.copy()
-            updated_state["search_agent_note"] = note
-            updated_state["search_agent_result"] = structured_result
-            updated_state["last_agent"] = self.agent_name
-            
-            # Maintain backward compatibility with legacy search_results field
-            search_results = structured_result.get("search_results", {
-                "businesses": [],
-                "reviews": []
-            })
-            updated_state["search_results"] = search_results
-            
-            # Add summary to messages
-            messages = updated_state.get("messages", [])
-            messages.append(note)
-            updated_state["messages"] = messages
-            
-            return updated_state
+            print(f"Agent Output: {agent_output}")
             
         except Exception as e:
             error_msg = f"Error in {self.agent_name}: {str(e)}"
             print(f"❌ {error_msg}")
             
-            updated_state = state.copy()
-            updated_state["search_agent_note"] = f"SearchAgent encountered an error: {str(e)}"
-            updated_state["search_agent_result"] = {"error": str(e)}
-            updated_state["search_results"] = {"businesses": [], "reviews": [], "error": str(e)}
-            updated_state["last_agent"] = self.agent_name
-            
-            return updated_state
 
-    def _parse_structured_output(self, agent_output: str) -> tuple[str, Dict[str, Any]]:
-        """Parse the structured output from the agent"""
-        import re
-        
-        # Extract JSON from the agent output
-        json_match = re.search(r'```json\s*(.*?)\s*```', agent_output, re.DOTALL)
-        
-        if json_match:
-            try:
-                json_data = json.loads(json_match.group(1))
-                
-                # Extract note and result from the JSON structure
-                note = json_data.get("note", "SearchAgent completed search task")
-                result = json_data.get("result", {})
-                
-                # Store the full output for reference
-                result["full_agent_output"] = agent_output
-                
-                # Create a backward compatible structure for search_results
-                search_results = {}
-                
-                # Extract data from tool outputs for backward compatibility
-                tool_outputs = result.get("tool_outputs", {})
-                
-                # Extract businesses and reviews from tool outputs
-                businesses = []
-                reviews = []
-                
-                # Look for business data in tool outputs
-                for tool_name, output in tool_outputs.items():
-                    # Get business data from business search tools
-                    if "business" in tool_name.lower() and isinstance(output, list):
-                        businesses.extend(output)
-                    elif isinstance(output, dict) and "businesses" in output:
-                        businesses.extend(output["businesses"])
-                    
-                    # Get review data from review search tools
-                    if "review" in tool_name.lower() and isinstance(output, list):
-                        reviews.extend(output)
-                    elif isinstance(output, dict) and "reviews" in output:
-                        reviews.extend(output["reviews"])
-                
-                # Add to structured result for backward compatibility
-                search_results["businesses"] = businesses
-                search_results["reviews"] = reviews
-                result["search_results"] = search_results
-                
-                # Debug logging
-                print(f"✅ Successfully parsed structured output")
-                print(f"  - Note: {note[:50]}...")
-                print(f"  - Tool outputs found: {list(tool_outputs.keys())}")
-                print(f"  - Businesses found: {len(businesses)}")
-                print(f"  - Reviews found: {len(reviews)}")
-                
-                return note, result
-                
-            except json.JSONDecodeError as e:
-                print(f"⚠️ Failed to parse JSON from agent output: {e}")
-                print(f"⚠️ JSON snippet that failed parsing: {json_match.group(1)[:100]}...")
-                return f"SearchAgent encountered error: {e}", {"error": str(e), "full_output": agent_output}
-        else:
-            # Fallback if no JSON found - this shouldn't happen if agent follows instructions
-            print("⚠️ No JSON structure found in agent output")
-            print(f"⚠️ Agent output: {agent_output[:200]}...")
-            return "SearchAgent completed task (no structured output)", {"full_output": agent_output}
-        
+
+if __name__ == "__main__":
+    search_agent = SearchAgent()
+    search_agent.process(user_query="Find information about the Vietnamese Food Truck")
+    search_agent.process(user_query="If I want to have pizza, where do you recommend?")

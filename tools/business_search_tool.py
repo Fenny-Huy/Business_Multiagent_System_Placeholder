@@ -142,8 +142,32 @@ class BusinessSearchTool:
             })
         
         return results
+    
+    
 
     def get_business_info(self, business_id: str):
+        from pandas import Timestamp
+        def clean_str(val):
+            import re
+            import json
+            
+            if isinstance(val, str):
+                # Remove backslashes
+                val = val.replace("\\", "")
+                # Remove u'...' and u"..." prefixes
+                val = re.sub(r"u(['\"])", r"\1", val)
+                # If it looks like a dict or list, try to convert to valid JSON
+                if (val.startswith("{") and val.endswith("}")) or (val.startswith("[") and val.endswith("]")):
+                    # Replace single quotes with double quotes
+                    val_json = val.replace("'", "\"")
+                    try:
+                        # Try to parse and re-dump as JSON
+                        return json.dumps(json.loads(val_json))
+                    except Exception:
+                        return val_json  # If parsing fails, just return the string with double quotes
+            return val
+        
+        
         """Return general info for a business_id using DuckDB"""
         if not self.db_available or not business_id:
             return {}
@@ -152,5 +176,15 @@ class BusinessSearchTool:
         result = self.db_manager.execute_query(query, params=[business_id])
         
         if not result.empty:
-            return result.iloc[0].to_dict()
+            info = result.iloc[0].to_dict()
+            # Clean up attributes and hours fields
+            if "attributes" in info:
+                info["attributes"] = clean_str(info["attributes"])
+            if "hours" in info:
+                info["hours"] = clean_str(info["hours"])
+            # Convert timestamps to ISO format
+            for k in ["created_at", "updated_at"]:
+                if k in info and isinstance(info[k], Timestamp):
+                    info[k] = info[k].isoformat()
+            return info
         return {}
