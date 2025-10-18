@@ -26,7 +26,7 @@ def _parse_structured_output(agent_output: str) -> tuple[str, Dict[str, Any]]:
 input_vietnamese = """
 ```json
 {
-  "note": "I found information about the Vietnamese Food Truck in Tampa Bay, Florida. The food truck has a 4.0 star rating and is open during lunch hours Monday through Wednesday and Friday, Saturday evenings, and Sunday afternoons.",
+  "note": "I found two businesses that match the description 'Vietnamese Food Truck': 'Vietnamese Food Truck' and 'Chao Vietnamese Street Food'. I retrieved detailed information for both businesses.",
   "result": {
     "tool_outputs": {
       "search_businesses": [
@@ -113,11 +113,77 @@ input_vietnamese = """
           },
           "created_at": "2025-09-25T01:50:58.520808",
           "updated_at": "2025-09-25T01:50:58.522807"
+        },
+        {
+          "business_id": "5gIfmupQTP3Lk4wIgNfoEQ",
+          "name": "Chao Vietnamese Street Food",
+          "address": "7854 E 96th St",
+          "city": "Fishers",
+          "state": "IN",
+          "postal_code": "46037",
+          "latitude": 39.9282154152,
+          "longitude": -86.0245093592,
+          "stars": 4.0,
+          "review_count": 315,
+          "is_open": true,
+          "attributes": {
+            "AcceptsInsurance": null,
+            "AgesAllowed": null,
+            "Alcohol": "u'beer_and_wine'",
+            "Ambience": "{'touristy': False, 'hipster': None, 'romantic': False, 'divey': False, 'intimate': False, 'trendy': None, 'upscale': False, 'classy': False, 'casual': True}",
+            "BYOB": null,
+            "BYOBCorkage": null,
+            "BestNights": null,
+            "BikeParking": "True",
+            "BusinessAcceptsBitcoin": null,
+            "BusinessAcceptsCreditCards": "True",
+            "BusinessParking": "{'garage': False, 'street': False, 'validated': False, 'lot': True, 'valet': False}",
+            "ByAppointmentOnly": null,
+            "Caters": "True",
+            "CoatCheck": null,
+            "Corkage": null,
+            "DietaryRestrictions": null,
+            "DogsAllowed": "False",
+            "DriveThru": null,
+            "GoodForDancing": null,
+            "GoodForKids": "True",
+            "GoodForMeal": "{'dessert': None, 'latenight': False, 'lunch': True, 'dinner': True, 'brunch': None, 'breakfast': False}",
+            "HairSpecializesIn": null,
+            "HappyHour": "False",
+            "HasTV": "True",
+            "Music": null,
+            "NoiseLevel": "u'average'",
+            "Open24Hours": null,
+            "OutdoorSeating": "True",
+            "RestaurantsAttire": "'casual'",
+            "RestaurantsCounterService": null,
+            "RestaurantsDelivery": "True",
+            "RestaurantsGoodForGroups": "True",
+            "RestaurantsPriceRange2": "2",
+            "RestaurantsReservations": "False",
+            "RestaurantsTableService": "True",
+            "RestaurantsTakeOut": "True",
+            "Smoking": null,
+            "WheelchairAccessible": "True",
+            "WiFi": "u'no'"
+          },
+          "categories": "Vietnamese, Restaurants",
+          "hours": {
+            "Friday": "16:0-20:0",
+            "Monday": "0:0-0:0",
+            "Saturday": "16:0-20:0",
+            "Sunday": null,
+            "Thursday": "16:0-20:0",
+            "Tuesday": "16:0-20:0",
+            "Wednesday": "16:0-20:0"
+          },
+          "created_at": "2025-09-25T01:50:58.520808",
+          "updated_at": "2025-09-25T01:50:58.522807"
         }
       ]
     },
     "query_processed": "Find information about the Vietnamese Food Truck",
-    "reasoning_summary": "I first used the `search_businesses` tool to find businesses matching the query. Then, I used the `get_business_info` tool to retrieve detailed information about the \"Vietnamese Food Truck\" based on its business_id."
+    "reasoning_summary": "The user is asking for information about a Vietnamese Food Truck. I used the `search_businesses` tool to find businesses matching that description, and then used the `get_business_info` tool to retrieve detailed information about the businesses found."
   }
 }
 ```"""

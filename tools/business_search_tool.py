@@ -103,7 +103,7 @@ class BusinessSearchTool:
         
         return []
 
-    def fuzzy_search(self, query: str, top_n: int = 5):
+    def fuzzy_search(self, query: str, top_n: int = 2):
         """Fuzzy search for businesses by name. Input can be a string (query) or a dict with 'query' and optional 'top_n'. The input query is used to search the business record with the business name most similar to the input query. Returns a list of similar business records."""
         if not self.db_available:
             return []

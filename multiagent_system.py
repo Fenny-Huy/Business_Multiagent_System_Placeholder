@@ -18,9 +18,6 @@ from config.logging_config import setup_logging, get_logger
 class AgentState(TypedDict):
     """State shared between all agents"""
     user_query: str
-    # Legacy fields for backward compatibility
-    search_results: Dict[str, Any]
-    analysis_results: Dict[str, Any] 
     final_response: str
     # New optimized fields with note/result separation
     search_agent_note: str
@@ -180,18 +177,7 @@ class MultiAgentSystem:
         
         updated_state = self.search_agent.process(state)
         
-        # Add message
-        messages = updated_state.get("messages", [])
-        search_results = updated_state.get("search_results", {})
-        result_summary = []
         
-        if "reviews" in search_results:
-            result_summary.append(f"Found {len(search_results['reviews'])} reviews")
-        if "businesses" in search_results:
-            result_summary.append(f"Found {len(search_results['businesses'])} businesses")
-        
-        messages.append(f"SearchAgent completed: {', '.join(result_summary) if result_summary else 'No results'}")
-        updated_state["messages"] = messages
         
         # Show state after processing
         self._display_state_change("SEARCH AGENT (After)", updated_state)

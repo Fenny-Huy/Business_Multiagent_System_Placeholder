@@ -154,6 +154,7 @@ IMPORTANT RULES:
 - Include the EXACT raw outputs from each tool under the appropriate tool name
 - Do NOT reformat, restructure, or modify the tool outputs in any way
 - Do NOT output ```json without "Final Answer: " prefix
+- Avoid using quotes or \\\" in your response
 
 REQUIRED EXECUTION FORMAT:
 Follow this exact format when executing your search:
