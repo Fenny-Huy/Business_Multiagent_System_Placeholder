@@ -39,7 +39,7 @@ class SearchAgent:
         self.tools = [
             Tool(
                 name="search_reviews",
-                description="Search for relevant reviews based on semantic similarity. Input can be a string (query), or a dict with 'query', optional 'k', and optional 'business_id'.",
+                description="Search for relevant reviews based on semantic similarity. Input can be a string (query), or a dict with \"query\", optional \"k\", and optional \"business_id\".",
                 func=self.review_search_tool
             ),
             

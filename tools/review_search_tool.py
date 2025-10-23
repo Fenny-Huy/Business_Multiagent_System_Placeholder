@@ -65,7 +65,6 @@ class ReviewSearchTool:
                     similarity_score = 1.0 - distance
                     
                     processed_results.append({
-                        "review_id": metadata.get("review_id", ""),
                         "text": text,
                         "stars": metadata.get("stars", ""),
                         "business_id": metadata.get("business_id", ""),

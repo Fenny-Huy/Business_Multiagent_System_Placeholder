@@ -7,7 +7,7 @@ def explore_duckdb_table(table_name: str, limit: int = 2):
     import ast
     con = duckdb.connect(DB_PATH)
     try:
-        query = f"SELECT attributes, hours FROM {table_name} WHERE business_id='eEOYSgkmpB90uNA7lDOMRA' LIMIT {limit}"
+        query = f"SELECT business_id, count(*) FROM {table_name} GROUP BY business_id ORDER BY count(*) DESC LIMIT {limit};"
         result = con.execute(query).fetchdf()
         # Parse each attributes string to a Python object
         def parse_attr(val):
@@ -17,8 +17,8 @@ def explore_duckdb_table(table_name: str, limit: int = 2):
                 except Exception:
                     return val
             return val
-        result['hours'] = result['hours'].apply(parse_attr)
-        result['attributes'] = result['attributes'].apply(parse_attr)
+        # result['hours'] = result['hours'].apply(parse_attr)
+        # result['attributes'] = result['attributes'].apply(parse_attr)
         # result['Ambience'] = result['attributes'].apply(lambda x: parse_attr(x.get('Ambience')) if isinstance(x, dict) and 'Ambience' in x else None)
         print(result)
         print("\nAs JSON:")
@@ -33,4 +33,4 @@ if __name__ == "__main__":
     print("Tables in database:", tables)
     con.close()
     # Replace 'your_table_name' with an actual table name from above
-    explore_duckdb_table('businesses')
+    explore_duckdb_table('reviews', limit=2)
