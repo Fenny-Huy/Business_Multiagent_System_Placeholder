@@ -36,64 +36,45 @@ When generating responses:
 Always aim to provide maximum value to the user through well-structured, insightful responses."""
     
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate final response based on collected information"""
+        """Generate final response based on collected information (uses only analysis_results as a single dict)."""
         user_query = state.get("user_query", "")
         search_results = state.get("search_results", {})
         analysis_results = state.get("analysis_results", {})
-        
+
         # Prepare context for response generation
         context_parts = []
-        
-        # Add user query context
         context_parts.append(f"User Query: {user_query}")
-        
-        # Add search results context
+
+        # Add search results context (optional, can be minimal)
         if search_results:
-            context_parts.append("\\n## Search Results:")
-            
+            context_parts.append("\n## Search Results:")
             if "reviews" in search_results:
                 reviews = search_results["reviews"]
                 if reviews and len(reviews) > 0:
-                    context_parts.append(f"Found {len(reviews)} relevant reviews:")
-                    for i, review in enumerate(reviews[:5], 1):  # Show top 5
-                        if isinstance(review, dict):
-                            stars = review.get("stars", "N/A")
-                            text_preview = review.get("text", "")[:200] + "..."
-                            context_parts.append(f"{i}. Rating: {stars} stars - {text_preview}")
-            
+                    context_parts.append(f"Found {len(reviews)} relevant reviews.")
             if "businesses" in search_results:
                 businesses = search_results["businesses"]
                 if businesses and len(businesses) > 0:
-                    context_parts.append(f"\\nFound {len(businesses)} relevant businesses:")
-                    for i, business in enumerate(businesses[:5], 1):  # Show top 5
-                        if isinstance(business, dict):
-                            name = business.get("name", "Unknown")
-                            stars = business.get("stars", "N/A")
-                            categories = business.get("categories", "")
-                            context_parts.append(f"{i}. {name} ({stars} stars) - {categories}")
-        
-        # Add analysis results context
+                    context_parts.append(f"Found {len(businesses)} relevant businesses.")
+
+        # Add analysis results context (new format: key_insights, summary, ...)
         if analysis_results:
-            context_parts.append("\\n## Analysis Results:")
-            
-            if "sentiment_analysis" in analysis_results:
-                sentiment = analysis_results["sentiment_analysis"]
-                context_parts.append(f"Sentiment Analysis:")
-                context_parts.append(f"- Total reviews analyzed: {sentiment.get('total_reviews', 0)}")
-                context_parts.append(f"- Positive: {sentiment.get('positive_percentage', 0)}%")
-                context_parts.append(f"- Negative: {sentiment.get('negative_percentage', 0)}%")
-                context_parts.append(f"- Overall sentiment: {sentiment.get('overall_sentiment', 'Unknown')}")
-            
-            if "business_analysis" in analysis_results:
-                business_analysis = analysis_results["business_analysis"]
-                context_parts.append(f"Business Analysis:")
-                context_parts.append(f"- Total businesses: {business_analysis.get('total_businesses', 0)}")
-                context_parts.append(f"- Average rating: {business_analysis.get('average_stars', 0)} stars")
-                context_parts.append(f"- Total reviews: {business_analysis.get('total_reviews', 0)}")
-        
+            context_parts.append("\n## Analysis Results:")
+            key_insights = analysis_results.get("key_insights")
+            summary = analysis_results.get("summary")
+            if key_insights:
+                context_parts.append("Key Insights:")
+                for insight in key_insights:
+                    context_parts.append(f"- {insight}")
+            if summary:
+                context_parts.append(f"Summary: {summary}")
+            # Fallback: show raw analysis_results if no key_insights/summary
+            if not key_insights and not summary:
+                context_parts.append(f"Raw Analysis Results: {analysis_results}")
+
         # Generate response using LLM
-        context = "\\n".join(context_parts)
-        
+        context = "\n".join(context_parts)
+
         prompt = f"""Based on the following information, provide a comprehensive and helpful response to the user's query.
 
 {context}
@@ -105,18 +86,16 @@ Please provide:
 4. Any important patterns or trends you notice
 
 Response:"""
-        
+
         try:
             response = self.llm._call(prompt)
-            
         except Exception as e:
             self.logger.error(f"Error generating response: {str(e)}")
             response = f"Error generating response: {str(e)}"
-        
+
         # Update state with final response
         updated_state = state.copy()
         updated_state["final_response"] = response
         updated_state["last_agent"] = self.agent_name
         updated_state["completed"] = True
-        
         return updated_state

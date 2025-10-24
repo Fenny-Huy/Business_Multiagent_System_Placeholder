@@ -22,8 +22,9 @@ class AgentState(TypedDict):
     # New optimized fields with note/result separation
     search_agent_note: str
     search_agent_result: Dict[str, Any]
-    analysis_agent_note: str
-    analysis_agent_result: Dict[str, Any]
+    # analysis_agent_note: str
+    # analysis_agent_result: Dict[str, Any]
+    analysis_results: str
     # Control fields
     last_agent: str
     next_agent: str
@@ -255,7 +256,6 @@ class MultiAgentSystem:
         # Initialize state
         initial_state = AgentState(
             user_query=user_query,
-            search_results={},
             analysis_results={},
             final_response="",
             last_agent="",

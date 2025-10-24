@@ -55,8 +55,7 @@ class ReviewSearchTool:
                     review = {
                         "text": text,
                         "stars": metadata.get("stars", ""),
-                        "date": metadata.get("date", ""),
-                        "score": float(similarity_score)
+                        "date": metadata.get("date", "")
                     }
                     if bid not in grouped:
                         grouped[bid] = []
