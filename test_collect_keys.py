@@ -192,3 +192,81 @@ business_content = get_field_content(json_text, "get_business_info")
 print("\nContent for root key 'get_business_info':\n", json.dumps(business_content, indent=2))
 
 
+
+
+# Utility: get the first dict from a list value for a root key, removing the outer array if present
+def get_field_content_unwrapped(json_text, field_key):
+  """Return the first dict (or value) from a root field key, unwrapping a single-item list if present."""
+  data = json.loads(json_text)
+  if isinstance(data, dict):
+    value = data.get(field_key)
+    if isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict):
+      return value[0]
+    else:
+      return value
+  else:
+    return None
+
+# Example usage:
+business_content_unwrapped = get_field_content_unwrapped(json_text, "get_business_info")
+print("\nUnwrapped content for root key 'get_business_info':\n", json.dumps(business_content_unwrapped, indent=2))
+
+get_name = next(iter(get_field_content_unwrapped(json_text, "get_business_info").values()))["name"]
+print ("\nBusiness name extracted:", get_name)
+# get_name = get_field_content(get_field_content_unwrapped(json_text, "get_business_info"), "eEOYSgkmpB90uNA7lDOMRA")
+
+
+# Tools for analysis agent 
+
+def extract_tool_results(json_text, tool_keys=("get_business_info", "search_reviews")):
+  """Extract the values for specified tool keys from the root of the JSON."""
+  data = json.loads(json_text)
+  results = {}
+  for key in tool_keys:
+    value = data.get(key)
+    if isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict):
+      results[key] = value[0]
+    else:
+      results[key] = value
+  return results
+
+def get_business_ids(business_info_dict):
+  """Return a list of business ids from the unwrapped get_business_info dict."""
+  if isinstance(business_info_dict, dict):
+    return list(business_info_dict.keys())
+  return []
+
+def get_business_value(business_info_dict, business_id, field):
+  """Return the value for a specific field of a business id."""
+  if isinstance(business_info_dict, dict):
+    info = business_info_dict.get(business_id)
+    if isinstance(info, dict):
+      return info.get(field)
+  return None
+
+
+
+
+# Example workflow
+
+# Step 1: Extract tool results
+tool_results = extract_tool_results(json_text)
+get_business_info_result = tool_results["get_business_info"]
+search_reviews_result = tool_results["search_reviews"]
+
+# Step 2: Get business ids
+business_ids = get_business_ids(get_business_info_result)
+print("\nBusiness IDs in get_business_info:", business_ids)
+
+# Step 3: Get a specific field value for a business id
+if business_ids:
+  first_id = business_ids[0]
+  business_name = get_business_value(get_business_info_result, first_id, "name")
+  print(f"Business name for {first_id}: {business_name}")
+
+# Step 4: (Optional) Get all available fields for a business id
+if business_ids:
+  first_id = business_ids[0]
+  fields = list(get_business_info_result[first_id].keys())
+  print(f"All fields for {first_id}: {fields}")
+
