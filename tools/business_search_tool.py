@@ -103,7 +103,7 @@ class BusinessSearchTool:
         
         return []
 
-    def fuzzy_search(self, query: str, top_n: int = 2):
+    def fuzzy_search(self, query: str, top_n: int = 1):
         """Fuzzy search for businesses by name. Input can be a string (query) or a dict with 'query' and optional 'top_n'. The input query is used to search the business record with the business name most similar to the input query. Returns a list of similar business records."""
         if not self.db_available:
             return []
@@ -172,5 +172,9 @@ class BusinessSearchTool:
             for k in ["created_at", "updated_at"]:
                 if k in info and isinstance(info[k], Timestamp):
                     info[k] = info[k].isoformat()
-            return json.dumps(info, indent=2, ensure_ascii=False)
+            bid = info.pop("business_id", None)
+            if bid is not None:
+                return json.dumps({bid: info}, indent=2, ensure_ascii=False)
+            else:
+                return json.dumps({}, indent=2, ensure_ascii=False)
         return json.dumps({})

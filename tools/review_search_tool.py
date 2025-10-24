@@ -28,54 +28,42 @@ class ReviewSearchTool:
             print(f"⚠️ Warning: Could not connect to ChromaDB: {e}")
             self.collection = None
     
-    def search_reviews(self, query: str, k: int = 5, business_id: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Search for relevant reviews
-        
-        Args:
-            query: Search query
-            k: Number of results to return
-            business_id: Optional business ID filter
-            
-        Returns:
-            List of review documents with metadata
+    def search_reviews(self, query: str, k: int = 5, business_id: Optional[str] = None) -> Dict[str, list]:
+        """Search for relevant reviews and group them by business_id.
+        Returns a dict: {business_id: [review_dict, ...], ...}
         """
         if not self.collection:
-            return [{"error": "ChromaDB collection not available"}]
-        
+            return {"error": "ChromaDB collection not available"}
         try:
             # Set up filter for business_id if provided
             where_filter = {"business_id": business_id} if business_id else None
-            
             # Query the collection
             results = self.collection.query(
                 query_texts=[query],
                 n_results=k,
                 where=where_filter
             )
-            
-            # Process results
-            processed_results = []
+            # Group reviews by business_id
+            grouped = {}
             if results and 'ids' in results and len(results['ids']) > 0:
                 for i in range(len(results['ids'][0])):
                     metadata = results['metadatas'][0][i] if 'metadatas' in results else {}
                     text = results['documents'][0][i] if 'documents' in results else ""
                     distance = results['distances'][0][i] if 'distances' in results else 0
-                    
-                    # Convert distance to similarity score
                     similarity_score = 1.0 - distance
-                    
-                    processed_results.append({
+                    bid = metadata.get("business_id", "")
+                    review = {
                         "text": text,
                         "stars": metadata.get("stars", ""),
-                        "business_id": metadata.get("business_id", ""),
                         "date": metadata.get("date", ""),
                         "score": float(similarity_score)
-                    })
-            
-            return processed_results
-            
+                    }
+                    if bid not in grouped:
+                        grouped[bid] = []
+                    grouped[bid].append(review)
+            return grouped
         except Exception as e:
-            return [{"error": f"Search failed: {str(e)}"}]
+            return {"error": f"Search failed: {str(e)}"}
     
     def __call__(self, input_data):
         """Make the tool callable with flexible input formats"""

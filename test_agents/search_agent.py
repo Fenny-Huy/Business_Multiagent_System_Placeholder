@@ -369,5 +369,5 @@ Please search for business information related to this query. Use the appropriat
 
 if __name__ == "__main__":
     search_agent = SearchAgent()
-    search_agent.process(user_query="Find information about the Vietnamese Food Truck")
+    search_agent.process(user_query="Can you find some information about a business called Vietnamese Food Truck and some of its reviews?")
     search_agent.process(user_query="If I want to have pizza, where do you recommend?")
