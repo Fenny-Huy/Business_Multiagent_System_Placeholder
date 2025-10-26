@@ -47,7 +47,7 @@ class BusinessSearchTool:
         result = self.db_manager.execute_query(query, params=[name])
         return result.iloc[0, 0] if not result.empty else None
 
-    def search_businesses(self, query: str, k: int = 3):
+    def search_businesses(self, query: str, k: int = 1):
         """Semantic search using ChromaDB embeddings"""
         if self.chroma_available:
             try:

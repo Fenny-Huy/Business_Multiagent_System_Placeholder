@@ -45,7 +45,7 @@ class AnalysisAgent:
             tools=self.tools,
             verbose=True,
             handle_parsing_errors=True,
-            max_iterations=10
+            max_iterations=15
         )
 
         print(f"✓ AnalysisAgent initialized with ReAct pattern and custom tools")
@@ -84,7 +84,9 @@ Action: the action to take, should be one of [{tool_names}]
 Action Input: the input to the action
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
+                                            
+Once you have the final answer, always output it in this format below, including the letters \"Final Answer:\":
+                                            
 Final Answer:
 ```json
 {{

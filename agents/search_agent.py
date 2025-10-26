@@ -39,7 +39,7 @@ class SearchAgent:
         self.tools = [
             Tool(
                 name="search_reviews",
-                description="Search for relevant reviews based on semantic similarity. Input can be a string (query), or a dict with \"query\", optional \"k\", and optional \"business_id\".",
+                description="Search for relevant reviews based on semantic similarity. Input can be a string (query), or a dict with \"query\", optional \"k\", and optional \"business_id\". Query is mandatory and a must-have regardless of string or dict input",
                 func=self.review_search_tool
             ),
             
@@ -65,8 +65,8 @@ class SearchAgent:
                 description="Semantic search for businesses. Return a business record. Input should be a string (query/description) or a dict with 'query' and optional 'k' for number of result returned. Input query represent any information about the business",
                 func=lambda input: (
                     print(f"[TOOL CALLED] search_businesses with input: {input}") or
-                    (self.business_search_tool.search_businesses(input, k=2) if isinstance(input, str)
-                    else self.business_search_tool.search_businesses(input.get("query", ""), k=input.get("k", 2)))
+                    (self.business_search_tool.search_businesses(input, k=1) if isinstance(input, str)
+                    else self.business_search_tool.search_businesses(input.get("query", ""), k=input.get("k", 1)))
                 )
 
             ),
