@@ -113,6 +113,7 @@ Available tools:
 - get_reviews_for_business: Get all reviews for a business ID
 
 When analyzing:
+- Only get the necessary and useful field, avoid requesting entire datasets or more unncessary fields and data such as longtitude or latitude or postal code if you can not find our about that coordinates
 - Look for patterns and trends in the data
 - Provide actionable insights based on your analysis
 - Be objective and evidence-based in your assessments

@@ -71,7 +71,16 @@ You must respond with ONLY the name of the next agent (SearchAgent, AnalysisAgen
             context_parts.append("Search: Not completed")
 
         if analysis_results:
-            context_parts.append(f"Analysis agent has completed analysis.")
+            # Show a preview of the analysis_results (first 300 chars or first lines)
+            import json
+            if isinstance(analysis_results, dict):
+                preview = json.dumps(analysis_results, ensure_ascii=False, indent=2)
+                preview = preview[:300] + ("..." if len(preview) > 300 else "")
+                print(f"Analysis Results Preview: {preview}")
+            else:
+                preview = str(analysis_results)[:300]
+                print(f"Analysis Results Preview: {preview}")
+            context_parts.append(f"Analysis agent has completed analysis. Preview: {preview}")
         else:
             context_parts.append("Analysis: Not completed")
         
