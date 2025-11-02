@@ -33,6 +33,12 @@ When generating responses:
 - Be comprehensive but concise
 - Address the user's original query directly
 
+Adapt your response format based on the context:
+- If the user query is straightforward, provide a direct and concise answer.
+- If the analysis results contain key insights, highlight them clearly.
+- If recommendations are relevant, include them in a structured manner.
+- If patterns or trends are evident, summarize them effectively.
+
 Always aim to provide maximum value to the user through well-structured, insightful responses."""
     
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -79,11 +85,11 @@ Always aim to provide maximum value to the user through well-structured, insight
 
 {context}
 
-Please provide:
-1. A direct answer to the user's question
-2. Key insights from the data
-3. Specific recommendations if applicable
-4. Any important patterns or trends you notice
+Adapt your response format based on the context:
+- If the user query is straightforward, provide a direct and concise answer.
+- If the analysis results contain key insights, highlight them clearly.
+- If recommendations are relevant, include them in a structured manner.
+- If patterns or trends are evident, summarize them effectively.
 
 Response:"""
 
