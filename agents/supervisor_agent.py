@@ -56,7 +56,7 @@ You must respond with ONLY the name of the next agent (SearchAgent, AnalysisAgen
         
         # Use efficient note-based routing instead of full results
         search_agent_note = state.get("search_agent_note", "")
-        analysis_agent_note = state.get("analysis_agent_note", "")
+        analysis_results = state.get("analysis_results", "")
         final_response = state.get("final_response", "")
         
         # Build context for decision making using notes for efficiency
@@ -69,9 +69,18 @@ You must respond with ONLY the name of the next agent (SearchAgent, AnalysisAgen
             context_parts.append(f"Search Agent Note: {search_agent_note}")
         else:
             context_parts.append("Search: Not completed")
-            
-        if analysis_agent_note:
-            context_parts.append(f"Analysis Agent Note: {analysis_agent_note}")
+
+        if analysis_results:
+            # Show a preview of the analysis_results (first 300 chars or first lines)
+            import json
+            if isinstance(analysis_results, dict):
+                preview = json.dumps(analysis_results, ensure_ascii=False, indent=2)
+                preview = preview[:300] + ("..." if len(preview) > 300 else "")
+                print(f"Analysis Results Preview: {preview}")
+            else:
+                preview = str(analysis_results)[:300]
+                print(f"Analysis Results Preview: {preview}")
+            context_parts.append(f"Analysis agent has completed analysis. Preview: {preview}")
         else:
             context_parts.append("Analysis: Not completed")
         
@@ -107,12 +116,12 @@ Your decision (respond with ONLY the agent name or FINISH):"""
             valid_choices = self.available_agents + ["FINISH"]
             if decision not in valid_choices:
                 # Default routing logic if LLM gives invalid response
-                decision = self._get_fallback_decision(search_agent_note, analysis_agent_note, final_response)
+                decision = self._get_fallback_decision(search_agent_note, analysis_results, final_response)
             
         except Exception as e:
             # Fallback routing logic
-            decision = self._get_fallback_decision(search_agent_note, analysis_agent_note, final_response)
-        
+            decision = self._get_fallback_decision(search_agent_note, analysis_results, final_response)
+
         # Update state with routing decision
         updated_state = state.copy()
         updated_state["next_agent"] = decision

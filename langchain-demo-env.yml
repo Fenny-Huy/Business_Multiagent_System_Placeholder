@@ -54,20 +54,31 @@ dependencies:
   # Install via pip (latest compatible versions)
   - pip:
       # === CORE LANGGRAPH & LANGCHAIN ===
-      - langgraph>=0.2.0
-      - langchain>=0.3.0
-      - langchain-community>=0.3.0
-      - langchain-core>=0.3.75
-      - langsmith>=0.4.0
+      - langchain==0.3.27
+      - langchain-chroma==0.2.6
+      - langchain-community==0.3.29
+      - langchain-core==0.3.76
+      - langchain-google-genai
+      - langchain-text-splitters==0.3.11
+      - langgraph==0.6.7
+      - langgraph-checkpoint==2.1.1
+      - langgraph-prebuilt==0.6.4
+      - langgraph-sdk==0.2.9
+      - langgraph-supervisor==0.0.29
       
       # === OFFICIAL GOOGLE GENAI INTEGRATION ===
-      - langchain-google-genai>=2.1.0
-      - google-generativeai>=0.8.0
-      - google-api-core>=2.25.0
-      - google-auth>=2.40.0
+      # - langchain-google-genai==2.1.12
+      - google-ai-generativelanguage
+      - google-api-core==2.25.1
+      - google-api-python-client==2.183.0
+      - google-auth==2.40.3
+      - google-auth-httplib2==0.2.0
+      - google-auth-oauthlib==1.2.2
+      - google-generativeai
+      - googleapis-common-protos==1.70.0
       
       # === VECTOR DATABASES ===
-      - chromadb>=0.5.0
+      - chromadb==1.1.0
       
       # === ML & NLP TOOLS ===
       - transformers>=4.45.0

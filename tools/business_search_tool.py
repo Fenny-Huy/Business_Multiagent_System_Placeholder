@@ -47,7 +47,7 @@ class BusinessSearchTool:
         result = self.db_manager.execute_query(query, params=[name])
         return result.iloc[0, 0] if not result.empty else None
 
-    def search_businesses(self, query: str, k: int = 3):
+    def search_businesses(self, query: str, k: int = 1):
         """Semantic search using ChromaDB embeddings"""
         if self.chroma_available:
             try:
@@ -103,7 +103,7 @@ class BusinessSearchTool:
         
         return []
 
-    def fuzzy_search(self, query: str, top_n: int = 5):
+    def fuzzy_search(self, query: str, top_n: int = 1):
         """Fuzzy search for businesses by name. Input can be a string (query) or a dict with 'query' and optional 'top_n'. The input query is used to search the business record with the business name most similar to the input query. Returns a list of similar business records."""
         if not self.db_available:
             return []
@@ -142,15 +142,39 @@ class BusinessSearchTool:
             })
         
         return results
+    
+    
 
     def get_business_info(self, business_id: str):
+        import ast
+        import json
+        from pandas import Timestamp
+        def parse_obj(val):
+            if isinstance(val, str):
+                try:
+                    return ast.literal_eval(val)
+                except Exception:
+                    return val
+            return val
         """Return general info for a business_id using DuckDB"""
         if not self.db_available or not business_id:
-            return {}
-            
+            return json.dumps({})
         query = "SELECT * FROM businesses WHERE business_id = ?"
         result = self.db_manager.execute_query(query, params=[business_id])
-        
         if not result.empty:
-            return result.iloc[0].to_dict()
-        return {}
+            info = result.iloc[0].to_dict()
+            # Parse attributes and hours fields as objects
+            if "attributes" in info:
+                info["attributes"] = parse_obj(info["attributes"])
+            if "hours" in info:
+                info["hours"] = parse_obj(info["hours"])
+            # Convert timestamps to ISO format
+            for k in ["created_at", "updated_at"]:
+                if k in info and isinstance(info[k], Timestamp):
+                    info[k] = info[k].isoformat()
+            bid = info.pop("business_id", None)
+            if bid is not None:
+                return json.dumps({bid: info}, indent=2, ensure_ascii=False)
+            else:
+                return json.dumps({}, indent=2, ensure_ascii=False)
+        return json.dumps({})
